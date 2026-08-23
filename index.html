@@ -123,7 +123,7 @@
 
     <!-- Channel Navigation (Horizontally scrollable tab bar) -->
     <div class="relative w-full border-b border-notion-borderLight dark:border-notion-borderDark mb-4">
-        <nav class="flex overflow-x-auto no-scrollbar" id="channelNav">
+        <nav class="flex overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing" id="channelNav">
             
             <!-- Bloomberg -->
             <button onclick="setChannel('bloomberg', this)" class="channel-btn active group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
@@ -182,7 +182,7 @@
         <div class="video-wrapper">
             <iframe 
                 id="videoPlayer"
-                src="https://www.youtube-nocookie.com/embed/QB5BNdBFujE?si=N1RA8m_V6m3ROQZ3" 
+                src="https://www.youtube-nocookie.com/embed/QB5BNdBFujE?si=N1RA8m_V6m3ROQZ3&autoplay=1&mute=1" 
                 title="Business News Live" 
                 frameborder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
@@ -197,16 +197,16 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const loader = document.getElementById('loader');
 
-        // Map to exact YouTube URLs provided by user
+        // Map to exact YouTube URLs provided by user (added &autoplay=1)
         const channels = {
-            'bloomberg': 'https://www.youtube-nocookie.com/embed/QB5BNdBFujE?si=N1RA8m_V6m3ROQZ3', 
-            'sky': 'https://www.youtube-nocookie.com/embed/YDvsBbKfLPA?si=CCZDRKGYeWOEMztZ',       
-            'cnn': 'https://www.youtube-nocookie.com/embed/GotlA1KKWoo?si=tV2ibJVilt1igurn',       
-            'aljazeera': 'https://www.youtube-nocookie.com/embed/gCNeDWCI0vo?si=cZWCKx4awCMw1LYY',
-            'dw': 'https://www.youtube-nocookie.com/embed/LuKwFajn37U?si=NmcXdkDofKuvZZeD',
-            'nbc': 'https://www.youtube-nocookie.com/embed/TWEdZ80Z6fk?si=OUlIuP40vCNEgNLd',
-            'abc': 'https://www.youtube-nocookie.com/embed/iipR5yUp36o?si=XFWdIUJAo1BxVHce',
-            'gbnews': 'https://www.youtube-nocookie.com/embed/I8E6eDmhegY?si=oxCgcc358B31P1Bv'
+            'bloomberg': 'https://www.youtube-nocookie.com/embed/QB5BNdBFujE?si=N1RA8m_V6m3ROQZ3&autoplay=1', 
+            'sky': 'https://www.youtube-nocookie.com/embed/YDvsBbKfLPA?si=CCZDRKGYeWOEMztZ&autoplay=1',       
+            'cnn': 'https://www.youtube-nocookie.com/embed/GotlA1KKWoo?si=tV2ibJVilt1igurn&autoplay=1',       
+            'aljazeera': 'https://www.youtube-nocookie.com/embed/gCNeDWCI0vo?si=cZWCKx4awCMw1LYY&autoplay=1',
+            'dw': 'https://www.youtube-nocookie.com/embed/LuKwFajn37U?si=NmcXdkDofKuvZZeD&autoplay=1',
+            'nbc': 'https://www.youtube-nocookie.com/embed/TWEdZ80Z6fk?si=OUlIuP40vCNEgNLd&autoplay=1',
+            'abc': 'https://www.youtube-nocookie.com/embed/iipR5yUp36o?si=XFWdIUJAo1BxVHce&autoplay=1',
+            'gbnews': 'https://www.youtube-nocookie.com/embed/I8E6eDmhegY?si=oxCgcc358B31P1Bv&autoplay=1'
         };
 
         // Switch channel logic
@@ -264,6 +264,34 @@
                 if (e.matches) htmlElement.classList.add('dark');
                 else htmlElement.classList.remove('dark');
             }
+        });
+
+        // Drag-to-scroll logic for the navigation bar
+        const slider = document.getElementById('channelNav');
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+        
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+        });
+        
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+        });
+        
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault(); // Prevents text highlighting while dragging
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // Scroll speed multiplier
+            slider.scrollLeft = scrollLeft - walk;
         });
     </script>
 </body>
