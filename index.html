@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Live News Hub</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        notion: {
+                            bgLight: '#ffffff',
+                            bgHoverLight: '#f1f1ef',
+                            textLight: '#37352f',
+                            textLightSecondary: '#787774',
+                            borderLight: '#e9e9e7',
+                            bgDark: '#191919',
+                            bgHoverDark: '#2f2f2f',
+                            textDark: 'rgba(255, 255, 255, 0.81)',
+                            textDarkSecondary: 'rgba(255, 255, 255, 0.45)',
+                            borderDark: '#373737',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Hide scrollbar for a seamless Notion embed */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Active channel button styling */
+        .channel-btn {
+            transition: all 0.2s ease-in-out;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .channel-btn.active {
+            color: theme('colors.notion.textLight');
+            border-bottom-color: theme('colors.gray.900');
+            background-color: theme('colors.notion.bgHoverLight');
+        }
+        
+        .dark .channel-btn.active {
+            color: theme('colors.notion.textDark');
+            border-bottom-color: theme('colors.gray.100');
+            background-color: theme('colors.notion.bgHoverDark');
+        }
+
+        /* Loader and Video Container */
+        #loader {
+            transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+        }
+        
+        /* Forces 16:9 Aspect Ratio perfectly */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background-color: #000;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+        }
+        
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body class="bg-notion-bgLight text-notion-textLight dark:bg-notion-bgDark dark:text-notion-textDark h-screen w-screen flex flex-col m-0 p-4 sm:p-6 overflow-hidden box-border">
+    
+    <!-- Top Header & Controls -->
+    <div class="flex items-center justify-between mb-4 px-1">
+        <div class="flex items-center gap-2">
+            <div class="flex items-center justify-center w-5 h-5 rounded-md bg-red-100 dark:bg-red-900/30">
+                <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse-slow"></div>
+            </div>
+            <h1 class="text-sm font-semibold tracking-wide uppercase text-notion-textLightSecondary dark:text-notion-textDarkSecondary">
+                Global Markets & News
+            </h1>
+        </div>
+
+        <button id="themeToggle" class="p-1.5 rounded-md hover:bg-notion-bgHoverLight dark:hover:bg-notion-bgHoverDark transition-colors flex-shrink-0 border border-transparent hover:border-notion-borderLight dark:hover:border-notion-borderDark" aria-label="Toggle Dark Mode">
+            <svg id="sunIcon" class="w-4 h-4 hidden dark:block text-notion-textDarkSecondary hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <svg id="moonIcon" class="w-4 h-4 block dark:hidden text-notion-textLightSecondary hover:text-gray-900 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+    </div>
+
+    <!-- Channel Navigation (Horizontally scrollable tab bar) -->
+    <div class="relative w-full border-b border-notion-borderLight dark:border-notion-borderDark mb-4">
+        <nav class="flex overflow-x-auto no-scrollbar" id="channelNav">
+            
+            <!-- Bloomberg -->
+            <button onclick="setChannel('bloomberg', this)" class="channel-btn active group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                Bloomberg
+            </button>
+            
+            <!-- Sky News -->
+            <button onclick="setChannel('sky', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                Sky News
+            </button>
+            
+            <!-- CNN -->
+            <button onclick="setChannel('cnn', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                CNN
+            </button>
+            
+            <!-- Al Jazeera -->
+            <button onclick="setChannel('aljazeera', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                Al Jazeera
+            </button>
+
+            <!-- DW News -->
+            <button onclick="setChannel('dw', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                DW News
+            </button>
+
+            <!-- NBC News -->
+            <button onclick="setChannel('nbc', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                NBC News
+            </button>
+            
+            <!-- ABC News -->
+            <button onclick="setChannel('abc', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                ABC News
+            </button>
+
+            <!-- GB News -->
+            <button onclick="setChannel('gbnews', this)" class="channel-btn group flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap flex-shrink-0 text-notion-textLightSecondary dark:text-notion-textDarkSecondary hover:text-notion-textLight dark:hover:text-notion-textDark hover:bg-notion-bgHoverLight/50 dark:hover:bg-notion-bgHoverDark/50 rounded-t-md">
+                GB News
+            </button>
+        </nav>
+    </div>
+
+    <!-- Video Player Area -->
+    <div class="relative w-full border border-notion-borderLight dark:border-notion-borderDark rounded-xl shadow-sm bg-black flex-shrink-0">
+        
+        <!-- Loading State Overlay -->
+        <div id="loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none rounded-xl transition-opacity duration-300">
+            <svg class="animate-spin h-8 w-8 text-white mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm text-white font-medium tracking-wide">Connecting stream...</span>
+        </div>
+
+        <div class="video-wrapper">
+            <iframe 
+                id="videoPlayer"
+                src="https://www.youtube-nocookie.com/embed/QB5BNdBFujE?si=N1RA8m_V6m3ROQZ3" 
+                title="Business News Live" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+
+    <script>
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const loader = document.getElementById('loader');
+
+        // Map to exact YouTube URLs provided by user
+        const channels = {
+            'bloomberg': 'https://www.youtube-nocookie.com/embed/QB5BNdBFujE?si=N1RA8m_V6m3ROQZ3', 
+            'sky': 'https://www.youtube-nocookie.com/embed/YDvsBbKfLPA?si=CCZDRKGYeWOEMztZ',       
+            'cnn': 'https://www.youtube-nocookie.com/embed/GotlA1KKWoo?si=tV2ibJVilt1igurn',       
+            'aljazeera': 'https://www.youtube-nocookie.com/embed/gCNeDWCI0vo?si=cZWCKx4awCMw1LYY',
+            'dw': 'https://www.youtube-nocookie.com/embed/LuKwFajn37U?si=NmcXdkDofKuvZZeD',
+            'nbc': 'https://www.youtube-nocookie.com/embed/TWEdZ80Z6fk?si=OUlIuP40vCNEgNLd',
+            'abc': 'https://www.youtube-nocookie.com/embed/iipR5yUp36o?si=XFWdIUJAo1BxVHce',
+            'gbnews': 'https://www.youtube-nocookie.com/embed/I8E6eDmhegY?si=oxCgcc358B31P1Bv'
+        };
+
+        // Switch channel logic
+        function setChannel(network, btnElement) {
+            // 1. Show loader
+            loader.style.opacity = '1';
+            
+            setTimeout(() => {
+                // 2. Update iframe src using the exact URL
+                videoPlayer.src = channels[network];
+                
+                // 3. Hide loader after iframe has had a moment to load
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                }, 1000);
+            }, 100);
+
+            // Reset all buttons styling
+            const allBtns = document.querySelectorAll('.channel-btn');
+            allBtns.forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Set active button styling
+            btnElement.classList.add('active');
+            
+            // Smoothly scroll the navigation bar to center the active button
+            btnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+
+        // Theme Handling matching Notion's system
+        function initializeTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                htmlElement.classList.add('dark');
+            } else {
+                htmlElement.classList.remove('dark');
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            if (htmlElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+        });
+
+        // Initialize App
+        initializeTheme();
+        
+        // Listen for system theme changes dynamically
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (!localStorage.theme) {
+                if (e.matches) htmlElement.classList.add('dark');
+                else htmlElement.classList.remove('dark');
+            }
+        });
+    </script>
+</body>
+</html>
